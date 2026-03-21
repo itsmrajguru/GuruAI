@@ -254,8 +254,145 @@ const verifyEmail = async (req, res) => {
     }
 }
 
+// Forgot Password Controller
+const forgotPassword = async (req, res) => {
+    //extract the email from req.body
+    const { email } = req.body
+
+    //define emailSchema using joi
+    const emailSchema = joi.object({
+        email: joi.string().email().required()
+    })
+
+    //validate the emailSchema
+    const { error } = emailSchema.validate({ email })
+
+    if (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.details[0].message
+        });
+    }
+    else {
+        try {
+            //step 1 :Validate the email,whether registered or not ?
+            const getUser = await userModel.findOne({ email, })
+
+            // Even If , user is not registerd ,stilll show 200
+            if (!getUser) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'If this email is registered, a reset link has been sent.'
+                });
+            }
+
+            //Step 1:generate a reset Token
+            const resetToken = crypto.randomBytes(32).toString('hex')
+
+            //EXTRA :hash reset Token
+            const hashedResetToken = crypto
+                .createHash('sha256')
+                .update(resetToken)
+                .digest('hex')
+            //update DB with resetToken
+            getUser.resetPasswordToken =hashedResetToken;
+            getUser.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+            await getUser.save()
+
+            //step 3:Inject the reset Token in the resetURL
+            const resetURL = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`
+
+            //Step 4 :generate a message
+            const msg = `You requested a password reset.\n\nReset your password here (valid 15 mins):\n\n${resetURL}\n\nIgnore this email if you didn't request it.`
+
+            //step 5 :Send Email
+            setTimeout(async () => {
+                try {
+                    const emailSent = await sendEmail({
+                        to: getUser.email,
+                        subject: 'GuruAI - Password Reset Request',
+                        text: msg
+                    })
+                    if (!emailSent) {
+                        console.log('Email Reset Link send failed')
+                    }
+                } catch (e) {
+                    console.log('Reset Email Send Error:', e);
+                }
+            }, 0);
+            return res.status(200).json({
+                success: true,
+                message: 'If this email is registered, a reset link has been sent.'
+            });
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                success: false,
+                message: 'Something went wrong! Please try again'
+            });
+        }
+    }
+}
+
+// Reset Password Controller
+
+const resetPassword = async (req, res) => {
+    /*extract newPassword as well as the token extracted by
+    frontend from email*/
+    const { token, newPassword } = req.body
+
+    //generate a newPassword Validation Schema
+    const newPasswordSchema = joi.object({
+        newPassword: joi.string().min(4).required()
+    })
+
+    //validate the newPassword
+    const { error } = newPasswordSchema.validate({ newPassword })
+
+    if (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.details[0].message
+        });
+    }
+    else {
+        try {
+            //validate token
+            const getUser = await userModel.findOne({
+                resetPasswordToken: token,
+                resetPasswordExpire: { $gt: Date.now() }
+            })
+
+            if (!getUser) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid or expired reset token. Please try again !'
+                });
+            }
+
+            //otherwise update DB with new Password
+            getUser.password = newPassword
+            getUser.resetPasswordToken = undefined
+            getUser.resetPasswordExpire = undefined
+
+            await getUser.save()
+            return res.status(200).json({
+                success: true,
+                message: 'Password reset successfully. Please login.'
+            });
+        } catch (e) {
+            console.log(e);
+            return res.status(500).json({
+                success: false,
+                message: 'Something went wrong! Please try again'
+            });
+        }
+    }
+}
 module.exports = {
     signup,
     login,
-    verifyEmail
+    verifyEmail, 
+    resetPassword,
+    forgotPassword
 }
