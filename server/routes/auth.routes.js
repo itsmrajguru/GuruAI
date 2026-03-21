@@ -10,5 +10,5 @@ authRouter.post('/login/', authController.login);
 authRouter.post('/verify/:tokena/', authController.verifyEmail);
 authRouter.post('/forgot-password/', authController.forgotPassword);
 authRouter.post('/reset-password/', authController.resetPassword);
-
+authRouter.post('/token/refresh/', authController.refreshToken);
 module.exports={authRouter}

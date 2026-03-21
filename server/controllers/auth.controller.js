@@ -389,10 +389,49 @@ const resetPassword = async (req, res) => {
         }
     }
 }
+
+// POST /api/auth/token/refresh
+const refreshToken = async (req, res) => {
+    //extract the refresh Token from cookies
+    /* refreshToken is automatically send by axios due to
+    withCredentials : true*/
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+        return res.status(401).json({
+            success: false,
+            message: 'No refresh token found. Please login again.'
+        });
+    }
+    try {
+        /* Step 1: Verify the token, Decode it and it will return
+            the original _id giveb by MongoDB,as we created token with
+            the help of that id */
+        const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET)
+
+        //step2 :Generate new acess token
+        const newAccessToken = generateAccessToken(decoded?.id)
+
+        return res.status(201).json({
+            success: true,
+            message: 'NewAcessToken generated Successfully',
+            newAccessToken /*this will be stored in the originalRequest.headers.[authorization]
+          as a bearer token */
+        });
+
+    } catch (e) {
+        return res.status(401).json({
+            success: false,
+            message: 'Refresh token invalid or expired. Please login again.'
+        });
+    }
+}
+
 module.exports = {
     signup,
     login,
     verifyEmail, 
     resetPassword,
-    forgotPassword
+    forgotPassword,
+    refreshToken
 }
