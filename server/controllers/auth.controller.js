@@ -140,7 +140,85 @@ const signup = async (req, res) => {
 }; // Fixed: Added missing closing brace for signup function
 
 
-module.exports = {
-    signup
+// Login Controller 
+const login = async (req, res) => {
+    //extract user credentials from req.body
+    const { email, password } = req.body;
 
+    //validate the credenetials with joi.object
+    const { error } = loginSchema.validate({ email, password })
+
+    if (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.details[0].message
+        });
+    }
+    else {
+        try {
+            // step 1: verify whether the emailId is registered or not
+            const getUser = await userModel.findOne({ email })
+            if (!getUser) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Incorrect Email'
+                });
+            }
+
+            // step 2: brcypt the password
+            const isPasswordCorrect = await getUser.matchPassword(password)
+
+            if (!isPasswordCorrect) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Incorrect Password'
+                });
+            }
+
+            //step 3:Check is the user Vetified 
+            /*when the user will verify the email
+            we are changing isVEerified===true and here
+            if the user is not verified,the this function will run*/
+
+            if (!getUser.isVerified) {
+                return res.status(200).json({
+                    success: false,
+                    message: 'Please verify your email before logging in'
+                });
+            }
+            //step 4:Generate Access & Refresh Tokens
+            const accessToken = generateAccessToken(getUser?._id)
+            const refreshToken = generateRefreshToken(getUser?._id)
+
+            //step 5: putting the tokens in the Cookie-Parser
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true, //js can not access it
+                secure: false,   // set true in production as (HTTPS)
+                sameSite: 'Lax',    // CSRF protection 
+                maxAge: 24 * 60 * 60 * 1000
+            })
+
+            return res.status(200).json({
+                success: true,
+                message: 'Login Successful',
+                accessToken,
+                /*only access token is sent in response because
+                it is storedd in the localStorage and sent to authMiddleware 
+                for verification of user by every 15 min  */
+            });
+
+        } catch (e) {
+            console.log(e)
+            res.status(500).json({
+                success: false,
+                message: 'Something went wrong ! Please try again'
+            })
+        }
+    }
+}
+
+
+module.exports = {
+    signup,
+    login
 }
