@@ -217,8 +217,45 @@ const login = async (req, res) => {
     }
 }
 
+// VerifyEmail Controller 
+const verifyEmail = async (req, res) => {
+    try {
+        //extract the token from frontend req.params
+        /* NOTE :We could sent the token to back-end through req.body
+        but its not a good practise, for small data like token,id 
+        always use req.params */
+        const { token } = req.params
+
+        //validate the token
+        const isTokenVerified = await userModel.findOne({ verificationToken: token })
+
+        if (!isTokenVerified) {
+            return res.status(400).json({ // Fixed: Added 400 status code
+                success: false,
+                message: 'Invalid or expired verification token'
+            })
+        }
+
+        // Fixed: Use document instance instead of Model class
+        isTokenVerified.isVerified = true;
+        isTokenVerified.verificationToken = undefined; //deletes the Verification Token as no need 
+        await isTokenVerified.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Email verified successfully. You can now log in.'
+        });
+    } catch (e) {
+        console.log(e);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong ! Please try again'
+        });
+    }
+}
 
 module.exports = {
     signup,
-    login
+    login,
+    verifyEmail
 }
