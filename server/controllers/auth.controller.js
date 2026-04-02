@@ -28,96 +28,83 @@ const loginSchema = joi.object({
 });
 
 // Signup Controller 
-
 const signup = async (req, res) => {
+    // step 1: Take credentials from frontend
+    const { email, password } = req.body
 
-    // Firstly extract credentials from frontend
-    const { username, email, password } = req.body;
-
-    // then lets validate the user credentials
-    const { error } = signupSchema.validate({ username, email, password });
-
+    // step 2: Validate the credentials with the joi
+    const { error } = signupSchema.validate({ email, password })
     if (error) {
         return res.status(400).json({
             success: false,
             message: error.details[0].message
-            /* this error is an array which contains all error properties */
-        });
+        })
     }
     else {
+        //If the user Credentials are okay,then proceed to further steps
         try {
-            /* now we will check whether the emailId or email
-             already exists or not ?*/
-
-            const isUserAlreadyExists = await userModel.findOne({
-                $or: [
-                    { email }, { username }
-                ]
-            })
-
+            // step 1:check whether the email already exists
+            const isUserAlreadyExists = await userModel.findOne({ email })
             if (isUserAlreadyExists) {
-                const msg = isUserAlreadyExists.email === email
-                    ? "Email is already registered"
-                    : "Username  is already taken"
-
                 return res.status(400).json({
                     success: false,
-                    message: msg
-                });
+                    message: 'email already exists'
+                })
             }
 
-            // Next is hashing the password (already done in userModel via pre('save'))
+            /* step 2 :If the user is not already registered , then
+            hash the password ,
+            but it is already being done in the userModel*/
 
+            // step 3: now choose one of the emial or otp verification 
             /* STEPS FOR EMAIL VERIFICATION:
-                Step 1 : when user registers with email-id, generate random token
+                Step 1 : Create a new user with isVerified: false
+                Step 2 : Generate a random token
                 Step 2 : save random token in database as VerificationToken
                 Step 3 : generate a Verify URL which will contain frontendURL + verificationToken
-                Step 4 : pass this verifyURL to message
-                Step 5 : pass the message to emailservice provider
-                Step 6 : sen email to user
+                Step 4 : pass this verifyURL to message and message in the email HTML
+                Step 6 : send emailVerification email to user via Resend
                 Step 7 : accept the token through the frontend
-                Step 8 : and verify the token through VerifyEmail REST API
-            */
+                Step 8 : and verify the token through VerifyEmail REST API */
 
-            // step 1: generate verification token
-            const verificationToken = crypto.randomBytes(32).toString('hex');
+            /* STEPS FOR OTP EMAIL VERIFICATION:
+                Step 1 : Create a new user with isVerified: false
+                Step 2 : Generate a random 6-digit OTP
+                Step 3 : Delete any old OTPs for this email and save the new one
+                Step 4 : Build OTP email HTML
+                Step 5 : Send OTP email to user via Resend
+                Step 6 : Return requiresOtp: true so frontend shows the OTP input
+                Step 7 : User enters OTP on frontend → calls /verify-signup-otp
+                Step 8 : On OTP match, mark isVerified: true and create blank profile */
 
-            //EXTRA :Hash Token
-            const hashedVerificationToken = crypto
-                .createHash('sha256')
-                .update(verificationToken)
-                .digest('hex')
+            // step 1:generate a six digit random otp
+            await otpModel.deleteMany({ email });
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+            await otpModel.create({ email, otp: otpCode });
 
-            /* step2 :create a new user with updated VerificationToken and save in
-            the database*/
-            const getUser = await userModel.create({
-                username,
-                email,
-                password,
-                verificationToken: hashedVerificationToken,
-                isVerified: true // changed to true for local server run, otherwise remove this line and comma (,)
-            });
+            //step 2: creating email HTML
+            const html = `
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f0fbfe;border-radius:16px;">
+                    <h2 style="color:#0179a0;margin-bottom:8px;">Verify Your CareerSync Account</h2>
+                    <p style="color:#444;font-size:15px;">Use the OTP below to complete your registration. It expires in <strong>10 minutes</strong>.</p>
+                    <div style="font-size:40px;font-weight:900;letter-spacing:10px;color:#111;background:#fff;border:2px solid #b3eefb;border-radius:12px;padding:20px 28px;display:inline-block;margin:20px 0;">${otpCode}</div>
+                    <p style="color:#888;font-size:12px;">If you did not create a CareerSync account, you can safely ignore this email.</p>
+                </div>
+            `;
 
-            // this Creates a blank profile for the getUser
-            await profileModel.create({ user: getUser._id });
 
-            // Step 3: Build email verification URL
-            const verifyUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify?token=${verificationToken}`;
-
-            // Step 4: pass the VerifyUrl in the message
-            const message = `Welcome to GuruAI !\n\nPlease verify your email by clicking on the following link:\n\n${verifyUrl}`;
-
-            // Step 5: Send verification email
+            // Step 3 : Send OTP email via Resend
             setTimeout(async () => {
                 try {
                     const emailSent = await sendEmail({
-                        to: getUser.email,
-                        subject: 'GuruAI - Email Verification',
-                        text: message
+                        to: email,
+                        subject: 'CareerSync — Verify Your Account',
+                        text: `Your CareerSync verification OTP is: ${otpCode}. It expires in 10 minutes.`,
+                        html
                     })
 
                     if (!emailSent) {
-                        console.log(`Vericaltion Email send failed...`);
+                        console.log(`Verification OTP Email send failed...`);
                     }
                     console.log("Email Sent Successfully")
                 } catch (e) {
@@ -127,9 +114,11 @@ const signup = async (req, res) => {
 
             return res.status(201).json({
                 success: true,
-                message: 'Account created successfully. Please verify your email.'
+                message: 'OTP sent to your email. Please verify to complete registration.',
+                requiresOtp: true,
+                email
             });
-        } catch (e) {
+        } catch {
             console.log(e)
             res.status(500).json({
                 success: false,
@@ -137,7 +126,10 @@ const signup = async (req, res) => {
             })
         }
     }
-}; // Fixed: Added missing closing brace for signup function
+}
+
+
+
 
 
 // Login Controller 
@@ -205,6 +197,11 @@ const login = async (req, res) => {
                 /*only access token is sent in response because
                 it is storedd in the localStorage and sent to authMiddleware 
                 for verification of user by every 15 min  */
+                user: {
+                    _id: getUser._id,
+                    username: getUser.username,
+                    email: getUser.email
+                }
             });
 
         } catch (e) {
@@ -216,6 +213,8 @@ const login = async (req, res) => {
         }
     }
 }
+
+
 
 // VerifyEmail Controller 
 const verifyEmail = async (req, res) => {
@@ -253,6 +252,55 @@ const verifyEmail = async (req, res) => {
         });
     }
 }
+
+
+// Verify Signup OTP Controller — validates OTP and marks user as verified
+const verifySignupOtp = async (req, res) => {
+    //extract email and otp from req.body
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+        return res.status(400).json({ success: false, message: 'Email and OTP are required' });
+    }
+
+    try {
+        //step 1 : look up the OTP record for this email
+        const record = await otpModel.findOne({ email });
+
+        if (!record) {
+            return res.status(400).json({
+                success: false,
+                message: 'OTP expired or not found. Please sign up again.'
+            });
+        }
+
+        //step 2 : compare the entered OTP with the saved one
+        if (record.otp !== otp.toString()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Incorrect OTP. Please try again.'
+            });
+        }
+
+        // OTP is valid — delete it so it cannot be reused
+        await otpModel.deleteMany({ email });
+
+        //step 3 : mark the user as verified in the database
+        const user = await userModel.findOneAndUpdate({ email }, { isVerified: true }, { new: true });
+
+        // this Creates a blank profile for the verified user
+        await profileModel.create({ user: user._id });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Email verified successfully. You can now log in.'
+        });
+    } catch (e) {
+        console.log(e);
+        res.status(500).json({ success: false, message: 'Something went wrong. Please try again.' });
+    }
+}
+
 
 // Forgot Password Controller
 const forgotPassword = async (req, res) => {
@@ -295,7 +343,7 @@ const forgotPassword = async (req, res) => {
                 .update(resetToken)
                 .digest('hex')
             //update DB with resetToken
-            getUser.resetPasswordToken =hashedResetToken;
+            getUser.resetPasswordToken = hashedResetToken;
             getUser.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
             await getUser.save()
 
@@ -430,7 +478,7 @@ const refreshToken = async (req, res) => {
 module.exports = {
     signup,
     login,
-    verifyEmail, 
+    verifySignupOtp,
     resetPassword,
     forgotPassword,
     refreshToken

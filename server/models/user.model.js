@@ -2,27 +2,18 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-    username: {
+    email: {
         type: String,
         required: true,
-        unique: true,
-        trim: true
+        unique: true
     },
     password: {
         type: String,
         required: true
     },
-    email: {
-        type: String,
-        required: false,
-        default: ''
-    },
     isVerified: {
         type: Boolean,
-        default: true //changed for local server run otherwise false
-    },
-    verificationToken: {
-        type: String
+        default: false
     },
     resetPasswordToken: {
         type: String
@@ -35,6 +26,7 @@ const userSchema = new mongoose.Schema({
         default: Date.now
     }
 });
+
 
 /* as a good practice we are hashing as well as comparing
 entered password with the saved password in the model itself
@@ -53,7 +45,8 @@ Plain password never reaches the database.
 that is about to be saved.
 */
 
-userSchema.pre('save',async function (){
+//run async function before we save the password in the database
+userSchema.pre('save',async function(){
     if(!this.isModified('password')){
         return;
     }
@@ -61,10 +54,11 @@ userSchema.pre('save',async function (){
     this.password=await bcrypt.hash(this.password,salt)
 })
 
-userSchema.methods.matchPassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
-};
+//check whether the entered password is same as the previously present password ? 
+userSchema.methods.matchPassword=async function(enteredPassword){
+    return await bcrypt.compare(enteredPassword, this.password)
+}
 
 //creating a model
 const userModel=mongoose.model('User',userSchema)
-module.exports =userModel
+module.exports=userModel
