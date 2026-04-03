@@ -18,7 +18,6 @@ const generateRefreshToken = (id) => {
 
 // user Credentials are validated using these properties
 const signupSchema = joi.object({
-    username: joi.string().required(),
     email: joi.string().email().required(),
     password: joi.string().min(4).required()
 });
@@ -78,7 +77,10 @@ const signup = async (req, res) => {
                 Step 7 : User enters OTP on frontend → calls /verify-signup-otp
                 Step 8 : On OTP match, mark isVerified: true and create blank profile */
 
-            // step 1:generate a six digit random otp
+            // step 1: actually insert the unverified user into the database
+            await userModel.create({ email, password, isVerified: false });
+
+            // step 2:generate a six digit random otp
             await otpModel.deleteMany({ email });
             const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
             await otpModel.create({ email, otp: otpCode });
@@ -86,10 +88,10 @@ const signup = async (req, res) => {
             //step 2: creating email HTML
             const html = `
                 <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f0fbfe;border-radius:16px;">
-                    <h2 style="color:#0179a0;margin-bottom:8px;">Verify Your CareerSync Account</h2>
+                    <h2 style="color:#0179a0;margin-bottom:8px;">Verify Your GuruAI Account</h2>
                     <p style="color:#444;font-size:15px;">Use the OTP below to complete your registration. It expires in <strong>10 minutes</strong>.</p>
                     <div style="font-size:40px;font-weight:900;letter-spacing:10px;color:#111;background:#fff;border:2px solid #b3eefb;border-radius:12px;padding:20px 28px;display:inline-block;margin:20px 0;">${otpCode}</div>
-                    <p style="color:#888;font-size:12px;">If you did not create a CareerSync account, you can safely ignore this email.</p>
+                    <p style="color:#888;font-size:12px;">If you did not create a GuruAI account, you can safely ignore this email.</p>
                 </div>
             `;
 
@@ -99,8 +101,8 @@ const signup = async (req, res) => {
                 try {
                     const emailSent = await sendEmail({
                         to: email,
-                        subject: 'CareerSync — Verify Your Account',
-                        text: `Your CareerSync verification OTP is: ${otpCode}. It expires in 10 minutes.`,
+                        subject: 'GuruAI — Verify Your Account',
+                        text: `Your GuruAI verification OTP is: ${otpCode}. It expires in 10 minutes.`,
                         html
                     })
 
@@ -200,7 +202,6 @@ const login = async (req, res) => {
                 for verification of user by every 15 min  */
                 user: {
                     _id: getUser._id,
-                    username: getUser.username,
                     email: getUser.email
                 }
             });

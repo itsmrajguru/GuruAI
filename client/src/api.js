@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:2501";
 
 const api = axios.create({
   baseURL: API_URL,
@@ -72,8 +72,8 @@ export async function loginUser(email, password) {
 }
 
 // Signup — sends OTP to email, returns requiresOtp: true
-export async function signupUser({ username, email, password }) {
-  return api.post('/auth/signup/', { username, email, password });
+export async function signupUser({ email, password }) {
+  return api.post('/auth/signup/', { email, password });
 }
 
 // Verify Signup OTP — marks user as verified on success
