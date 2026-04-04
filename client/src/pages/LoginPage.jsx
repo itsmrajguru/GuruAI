@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../api";
+import AuthLeftPanel from "../components/AuthLeftPanel";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const navigate = useNavigate();
 
   /* validates credentials — if valid, backend issues JWT tokens directly */
@@ -32,94 +34,121 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f0fbfe] font-sans">
-      <div className="flex-1 flex items-center justify-center px-4 w-full py-12">
-        <div className="w-full max-w-md relative z-10">
-        {/* adding feature-card for consistent layout matched with home page */}
-        <div className="feature-card p-10 w-full">
+    <div className="min-h-screen bg-surface-50 flex items-center justify-center px-4 py-8 relative overflow-hidden font-sans">
+      <div className="relative z-10 flex items-center gap-8 w-full max-w-[860px]">
 
-          {/* Hero section with GuruAI logo and login header */}
-          <div className="text-center mb-8">
-            <img
-              src="/logo.svg"
-              alt="Logo"
-              className="h-16 w-16 rounded-full mx-auto mb-4 object-cover"
-            />
-            <span className="text-2xl font-black text-neutral-800 tracking-tight block">
-              Guru<span className="text-primary-500">AI</span>
-            </span>
-            <p className="text-neutral-400 mt-2 text-sm font-medium">
-              Welcome back! Please login to continue.
+        {/* left side authComponent */}
+        <AuthLeftPanel />
+
+        {/* Right Side Login Card */}
+        <div className="flex-1 flex justify-center animate-fade-up">
+          <div className="bg-white border border-surface-400 rounded-3xl px-9 py-4 w-full max-w-[380px] shadow-card relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gold-accent rounded-t-3xl" />
+
+            {/* Hero section with GuruAI logo and login header */}
+            <div className="mb-3">
+              <h1 className="font-display text-[2rem] font-semibold text-neutral-900 -tracking-[0.02em] leading-none mb-[0.35rem]">Guru<span className="text-primary-500">AI</span></h1>
+              <p className="text-sm text-surface-700 m-0">Welcome back. Please login to continue.</p>
+            </div>
+
+            {/* Displaying the login failed errors */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm font-semibold text-center">
+                {error}
+              </div>
+            )}
+
+            {/*through this form, we will take the email and password
+from the user and log them in directly */}
+            <form onSubmit={handleSubmit} className="flex flex-col">
+              <div className="mb-1.5">
+                <label className="block text-[0.72rem] font-bold tracking-[0.09em] uppercase text-accent-500 mb-1">Email</label>
+                <div className="relative">
+                  <input
+                    className="peer w-full bg-transparent border-none border-b-[1.5px] border-surface-500 rounded-none py-1 font-sans text-[0.9375rem] text-neutral-900 outline-none transition-colors duration-250 ease-smooth placeholder:text-surface-600"
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-primary-500 rounded-pill" />
+                </div>
+              </div>
+
+              <div className="mb-1.5">
+                <label className="block text-[0.72rem] font-bold tracking-[0.09em] uppercase text-accent-500 mb-1">Password</label>
+                <div className="relative">
+                  <input
+                    className="peer w-full bg-transparent border-none border-b-[1.5px] border-surface-500 rounded-none py-1 font-sans text-[0.9375rem] text-neutral-900 outline-none transition-colors duration-250 ease-smooth placeholder:text-surface-600 pr-8"
+                    type={showPass ? "text" : "password"}
+                    name="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    minLength={6}
+                  />
+                  {/* lets add the circular Loading ring In the button section With the help of SVG image And at a line and points*/}
+                  <button type="button" className="absolute right-0 top-1/2 -translate-y-1/2 bg-none border-none cursor-pointer p-1 flex" onClick={() => setShowPass(!showPass)} tabIndex={-1}>
+                    {showPass ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a7045" strokeWidth="2" strokeLinecap="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9a7045" strokeWidth="2" strokeLinecap="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                  <span className="absolute bottom-0 left-0 h-[1.5px] w-full bg-primary-500 rounded-pill" />
+                </div>
+              </div>
+
+              {/*Option for the user to change the password */}
+              <div className="flex justify-end -mt-1 mb-4">
+                <Link to="/forgot-password" title="Forgot password?" className="text-[0.72rem] font-bold text-primary-500 hover:text-primary-600 transition-colors uppercase tracking-wider">
+                  Forgot password?
+                </Link>
+              </div>
+
+              {/*The submit button will submit the form,
+with the help of inbuilt Onsubmit Function called in the form */}
+              <button type="submit" className="w-full bg-neutral-900 border-none rounded-xl py-2.5 px-6 text-sm font-semibold text-white cursor-pointer flex items-center justify-center gap-2 transition-all duration-250 ease-smooth hover:-translate-y-[1px] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading}>
+                {loading ? (
+                  <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Logging in...</>
+                ) : (
+                  <>Login<span className="bg-white/20 rounded-full p-0.5 ml-1 flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></span></>
+                )}
+              </button>
+            </form>
+
+            <div className="flex items-center gap-[10px] my-2 before:content-[''] before:flex-1 before:h-[1px] before:bg-surface-400 after:content-[''] after:flex-1 after:h-[1px] after:bg-surface-400"><span className="text-[0.65rem] font-bold uppercase tracking-widest text-surface-600">or</span></div>
+
+            <button className="w-full bg-surface-100 border border-surface-400 rounded-xl py-[8px] px-5 text-sm font-medium text-surface-900 cursor-pointer flex items-center justify-center gap-2 transition-all duration-250 ease-smooth hover:bg-[#fff8f0] hover:border-surface-500 hover:-translate-y-[1px]">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+              Continue with Google
+            </button>
+
+            {/*Option for the user to jump signup page */}
+            <p className="text-center mt-2 text-sm text-surface-700 font-medium">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-primary-500 hover:text-primary-600 font-bold transition-colors">Create Account</Link>
             </p>
           </div>
-
-          {/* Displaying the login failed errors */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-6 text-sm font-semibold text-center">
-              {error}
-            </div>
-          )}
-
-          {/*through this form, we will take the email and password
-from the user and log them in directly */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-neutral-400 ml-1 uppercase tracking-wider">Email</label>
-              <input
-                type="email"
-                name="email"
-                className="w-full p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-700 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all font-medium text-sm"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                placeholder="Enter your email"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-neutral-400 ml-1 uppercase tracking-wider">Password</label>
-              <input
-                type="password"
-                name="password"
-                className="w-full p-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-neutral-700 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all font-medium text-sm"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                placeholder="••••••••"
-                minLength={6}
-              />
-            </div>
-
-            {/*Option for the user to change the password */}
-            <div className="flex justify-end -mt-2">
-              <Link to="/forgot-password" className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-colors">
-                Forgot password?
-              </Link>
-            </div>
-            {/*The submit button will submit the form,
-with the help of inbuilt Onsubmit Function called in the form */}
-            {/* updating the button to use the new btn-primary class */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary mt-4 w-full py-3.5 text-base"
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
-
-          {/*Option for the user to jump signup page */}
-          <div className="text-center mt-8 text-sm text-neutral-400 font-medium">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary-500 hover:text-primary-600 font-bold transition-colors">
-              Create Account
-            </Link>
-          </div>
         </div>
+
       </div>
     </div>
-    </div>
-);
+  );
 }
