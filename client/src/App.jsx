@@ -6,7 +6,7 @@ import VerifySignupOtpPage from './pages/VerifySignupOtpPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import NotFoundPage from './pages/NotFoundPage'
-import DashboardPage from './pages/dashboardPage'
+import DashboardPage from './pages/DashboardPage'
 
 function App() {
   return (
