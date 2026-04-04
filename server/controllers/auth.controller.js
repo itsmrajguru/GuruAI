@@ -122,7 +122,12 @@ const signup = async (req, res) => {
                 email
             });
         } catch (e) {
-            console.log(e)
+            console.error('[Signup Error Details]:', {
+                message: e.message,
+                stack: e.stack,
+                name: e.name,
+                code: e.code
+            });
             res.status(500).json({
                 success: false,
                 message: 'Something went wrong ! Please try again'

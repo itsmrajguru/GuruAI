@@ -8,19 +8,6 @@ const boxen = require('boxen');
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 
-// /* dnscache is a short-term memory for the server.
-// It remembers the IP address of external systems (like MongoDB Atlas),
-// so the server does not need to look up the IP address on every request.
-// This reduces unnecessary delay and improves performance under high traffic.
-// The IP is remembered for 300 seconds (5 minutes), after which it looks up again.*/
-
-// require('dnscache')({
-//     "enable": true,
-//     "ttl": 300, //time to live -> 300sec =>5 min
-//     "cachesize": 1000  //means can remember to upto 1000 diffrent IP addresss
-// });
-
-
 require('dnscache')({
     "enable":true,
     "ttl":300,           //Time to live (300s =5 min)
@@ -39,7 +26,6 @@ app.use(express.json())
 
 //DB connection
 const { connectDB } = require('./database/db')
-const { connect } = require('mongoose')
 connectDB()
 
 //routes connection
@@ -66,12 +52,4 @@ app.listen(PORT, () => {
     })
     // step 3:now printed the box 
     console.log(box);
-    // console.lolg(`server listening at http://localhost:${PORT}`)
 })
-
-
-
-
-
-
-

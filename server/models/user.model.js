@@ -46,19 +46,19 @@ that is about to be saved.
 */
 
 //run async function before we save the password in the database
-userSchema.pre('save',async function(){
-    if(!this.isModified('password')){
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) {
         return;
     }
-    const salt=await bcrypt.genSalt(10);
-    this.password=await bcrypt.hash(this.password,salt)
+    const salt = bcrypt.genSaltSync(10);
+    this.password = bcrypt.hashSync(this.password, salt)
 })
 
 //check whether the entered password is same as the previously present password ? 
-userSchema.methods.matchPassword=async function(enteredPassword){
+userSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password)
 }
 
 //creating a model
-const userModel=mongoose.model('User',userSchema)
-module.exports=userModel
+const userModel = mongoose.model('User', userSchema)
+module.exports = userModel
