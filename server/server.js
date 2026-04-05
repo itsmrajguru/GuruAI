@@ -16,7 +16,7 @@ require('dnscache')({
 app.use(
     cors({
         origin: [process.env.CLIENT_URL || "http://localhost:5173", "http://127.0.0.1:5173"],
-        methods: ['GET', 'POST', 'PUT', 'PATCH'],
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
         credentials: true
     })
 )
@@ -28,9 +28,13 @@ app.use(express.json())
 const { connectDB } = require('./database/db')
 connectDB()
 
-//routes connection
+// auth routes connection
 const { authRouter } = require('./routes/auth.routes')
 app.use('/auth', authRouter)
+
+//ai integration routes connection
+const { aiRouter } = require('./routes/ai.routes')
+app.use('/ai', aiRouter)
 
 //welcome Route
 app.get('/', (req, res) => {
