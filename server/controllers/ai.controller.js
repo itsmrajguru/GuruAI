@@ -44,7 +44,7 @@ const chat = async (req, res) => {
         let conversation;
         if (conversationId) {
             //continuing the existing conversation
-            converstaion = await conversationModel.findOne({
+            conversation = await conversationModel.findOne({
                 _id: conversationId,
                 userId              //extra layer of security
             })
@@ -110,7 +110,7 @@ const chat = async (req, res) => {
 /* this controller returns all the conversations but with titles only 
 that too for the sidebar only */
 
-const getconversions = async (req, res) => {
+const getConversations = async (req, res) => {
     /* firstly exctact the userId so that the server knows, of which
      user conversations are to be loaded */
     const userId = req.user.id;
@@ -120,7 +120,7 @@ const getconversions = async (req, res) => {
           and sort it to display the latest one*/
         const conversations = await conversationModel
             .find({ userId })
-            .select('_id title updated at')
+            .select('_id title updatedAt')
             .sort({ updatedAt: -1 });
 
         return res.status(200).json({
@@ -142,6 +142,9 @@ and it runs when user clicks conversations in the sidebar*/
 
 const getConversation = async (req, res) => {
     // extract the userID from req.user.id and the id from params.id
+    const userId = req.user.id;
+    const { id } = req.params;
+
     try {
         /* we are finding the conversation by both _id and userId to prevent
         the users from accessing other users conversations */
@@ -178,7 +181,7 @@ const deleteConversation = async (req, res) => {
         const deleted = await conversationModel.findOneAndDelete({ _id: id, userId })
         if (!deleted) {
             return res.status(404).json({
-                success: true,
+                success: false,
                 message: 'Conversation not found.'
             })
         }

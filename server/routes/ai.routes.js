@@ -5,7 +5,7 @@ const aiRouter=express.Router()
 const {protect}=require('../middleware/auth.middleware')
 
 //importing controller 
-const {aiController}=require('../controllers/ai.controller')
+const aiController=require('../controllers/ai.controller')
 
 //routes for Gemini chat service integration
 
@@ -16,9 +16,9 @@ aiRouter.post('/chat',protect,aiController.chat)
 aiRouter.get('/conversations',protect,aiController.getConversations)
 
 //to get a single conversation with full messages
-aiRouter.get('/conversation/:id',protect, aiController.getConversation)
+aiRouter.get('/conversations/:id',protect, aiController.getConversation)
 
 //to permentaly delete a conversation
-aiRouter.delete('/=conversation/:id',protect, aiController.deleteConversation)
+aiRouter.delete('/conversations/:id',protect, aiController.deleteConversation)
 
 module.exports={aiRouter};

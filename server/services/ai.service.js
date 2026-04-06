@@ -73,10 +73,10 @@ const sendToGemini = async (messages, userMessage) => {
       Our format    : { role: 'user'|'model', content: 'text...' }
       Gemini format : { role: 'user'|'model', parts: [{ text: 'text...' }] } */
 
-   const history = messages.map((msg => {
+   const history = messages.map(msg => ({
          role: msg.role,
          parts:[{ text: msg.content }]
-   }))
+   }));
 
    /* step 5: start a chat session with the full conversation history
        This is what gives Gemini context about what was said before */
