@@ -7,6 +7,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import NotFoundPage from './pages/NotFoundPage'
 import DashboardPage from './pages/DashboardPage'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
@@ -18,7 +19,11 @@ function App() {
           <Route path="/verify-signup-otp" element={<VerifySignupOtpPage/>}/>
           <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
           <Route path="/reset-password" element={<ResetPasswordPage/>}/>
-          <Route path="/dashboard" element={<DashboardPage/>}/>
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage/>
+            </ProtectedRoute>
+          }/>
           <Route path="*" element={<NotFoundPage/>}/>
         </Routes>
     </div>
