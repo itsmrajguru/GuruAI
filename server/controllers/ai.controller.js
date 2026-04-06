@@ -1,5 +1,5 @@
 const conversationModel = require('../models/conversation.model.js');
-const { sendToGemini } = require('../services/ai.service.js');
+const { sendToGemini, isRateLimitError } = require('../services/ai.service.js');
 
 
 const chat = async (req, res) => {
@@ -100,9 +100,21 @@ const chat = async (req, res) => {
         })
     } catch (e) {
         console.error('[AI Controller] chat error:', e.message);
+
+        // The service sets e.isRateLimit = true when all retries were quota-related
+        /* we are adding this service to inform the user that due 
+        free quota , our service has issue with too many requests
+        so the actaul message commign from the gemini service is returned to the user*/
+        if (e.isRateLimit || isRateLimitError(e)) {
+            return res.status(429).json({
+                success: false,
+                message: 'GuruAI is a bit busy (rate limit reached). Please wait a few seconds and try again.'
+            });
+        }
+
         return res.status(500).json({
             success: false,
-            message: e.message || 'AI service error. Please try again.'
+            message: 'AI service encountered an unexpected error. Please try again.'
         });
     }
 }
