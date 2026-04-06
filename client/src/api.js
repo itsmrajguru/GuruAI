@@ -88,4 +88,29 @@ export async function resetPassword(token, password) {
   return api.post('/auth/reset-password/', { token, newPassword: password });
 }
 
+
+// AI Chat routes 
+
+// sendMessage — sends a user message to GuruAI and returns the AI reply
+// If conversationId is provided, continues that thread; otherwise starts a new one
+export async function sendMessage(message, conversationId = null) {
+  return api.post('/ai/chat', { message, conversationId });
+}
+
+// getConversations — returns all conversation stubs (id, title, updatedAt) for the sidebar
+export async function getConversations() {
+  return api.get('/ai/conversations');
+}
+
+// getConversation — returns a single conversation with full message history
+export async function getConversation(id) {
+  return api.get(`/ai/conversations/${id}`);
+}
+
+// deleteConversation — permanently removes a conversation
+export async function deleteConversation(id) {
+  return api.delete(`/ai/conversations/${id}`);
+}
+
 export default api;
+
