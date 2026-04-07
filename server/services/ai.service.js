@@ -1,7 +1,6 @@
-require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+require('dotenv').config();
 
-// this is the GuruAi system Prompt,that includes the initial context as a guide for guruAi
 const GURU_SYSTEM_PROMPT = `You are GuruAI — a wise, empathetic, and deeply knowledgeable career guidance assistant. 
 You embody the spirit of an ancient Indian guru combined with modern professional intelligence.
 
@@ -40,53 +39,151 @@ professional growth, or work — politely redirect them back
 to career topics. Say something like "That's outside my 
 expertise, but I'd love to help you with your career journey! `;
 
-const sendToGemini = async (messages, userMessage) => {
 
-   /* steps to get response from the Gemini
-   step 1 :ensure that the api key is working fine
-   step 2 :Initialize the gemini client using  GoogleGenerativeAI()
-   step 3 :Initialize the gemini model using genai.getGenerativeModel()
-   step 4 :convert the DBMessage format into gemini expected  format
-   step 5: start a chat session with the full conversation history using model.startChat()
-   
-           This is what gives Gemini context about what was said before */
-   /* step 6: send the new user message and await the reply using chat.sendMessage()
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-          sendMessage() automatically appends to the chat history internally */
-
-
-
-   // step 1 :ensure that the api key is working fine
-   if (!process.env.GEMINI_API_KEY) {
-      console.error('[AI Service] GEMINI_API_KEY is not set in .env');
-      throw new Error('AI service is not configured. Please add GEMINI_API_KEY to your .env file.');
-   }
-   // step 2 :Initialize the gemini client
-   const genAi = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-   // step 3 :Initialize the gemini model
-   const model = genAi.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      systemInstruction: GURU_SYSTEM_PROMPT
-   })
-
-   /*step 4 :convert the DBMessage format into gemini expected  format
-      Our format    : { role: 'user'|'model', content: 'text...' }
-      Gemini format : { role: 'user'|'model', parts: [{ text: 'text...' }] } */
-
-   const history = messages.map(msg => ({
-         role: msg.role,
-         parts:[{ text: msg.content }]
-   }));
-
-   /* step 5: start a chat session with the full conversation history
-       This is what gives Gemini context about what was said before */
-   const chat=model.startChat({history});
-
-   /* step 6: send the new user message and await the reply
-          sendMessage() automatically appends to the chat history internally */
-   const result=await chat.sendMessage(userMessage);
-   const reply=result.response.text();
-
-   return reply
+/* Here  we are importing diffent api keys in the keys arrays which ultimately passed 
+to */
+function getApiKeys() {
+    const keys = [];
+    if (process.env.GEMINI_API_KEY)   keys.push(process.env.GEMINI_API_KEY);
+    if (process.env.GEMINI_API_KEY_2) keys.push(process.env.GEMINI_API_KEY_2);
+    if (process.env.GEMINI_API_KEY_3) keys.push(process.env.GEMINI_API_KEY_3);
+    if (process.env.GEMINI_API_KEY_4) keys.push(process.env.GEMINI_API_KEY_4);
+    if (keys.length === 0) throw new Error('No GEMINI_API_KEY defined in .env');
+    return keys;
 }
-module.exports={sendToGemini}
+
+/* we are manullly adding this function to check that whether the gemini is returing 
+any server issue
+and if we fail to recognise this error then we will fai */
+function isRateLimitError(error) {
+    if (error.status === 429) return true;
+
+    if (typeof error.status === 'string') {
+        const s = error.status.toUpperCase();
+        if (s === 'TOO_MANY_REQUESTS' || s === 'RESOURCE_EXHAUSTED') return true;
+    }
+    const msg = (error.message || '').toString();
+    if (
+        msg.includes('429') ||
+        msg.toLowerCase().includes('too many requests') ||
+        msg.toLowerCase().includes('resource_exhausted') ||
+        msg.toLowerCase().includes('quota') ||
+        msg.toLowerCase().includes('rate limit')
+    ) return true;
+
+    if (Array.isArray(error.errorDetails)) {
+        for (const detail of error.errorDetails) {
+            if (detail?.reason === 'RATE_LIMIT_EXCEEDED' || detail?.reason === 'RESOURCE_EXHAUSTED') return true;
+        }
+    }
+
+    return false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Robust 404 / model-not-found detection
+// ─────────────────────────────────────────────────────────────────────────────
+function isNotFoundError(error) {
+    if (error.status === 404) return true;
+    if (typeof error.status === 'string' && error.status.toUpperCase() === 'NOT_FOUND') return true;
+    const msg = (error.message || '').toString();
+    // Only treat as 404 if both "not found" and "model" appear together, or plain 404 appears
+    if (msg.includes('404') || msg.toLowerCase().includes('not found')) return true;
+    return false;
+}
+
+/**
+ * sendToGemini — Fast, web-friendly AI call strategy:
+ *
+ *  On rate-limit  → switch to next KEY immediately (500ms pause max)
+ *  On not-found   → skip ALL keys for that model, try next model
+ *  On other error → stop immediately
+ *  Between models → 2s pause only if all keys were rate-limited
+ */
+async function sendToGemini(messages, currentMessage) {
+    // Google deprecated gemini-1.5 models in 2026. 
+    // We use the available models shown by the ListModels API.
+    const MODELS = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+    ];
+
+    const API_KEYS = getApiKeys();
+    let lastError   = null;
+    let anyRateLimitHit = false;
+
+    for (let mi = 0; mi < MODELS.length; mi++) {
+        const modelName   = MODELS[mi];
+        let allKeysRateLimited = true; 
+
+        for (let ki = 0; ki < API_KEYS.length; ki++) {
+            const apiKey = API_KEYS[ki];
+
+            try {
+                console.log(`[AI Service] model=${modelName}  key#${ki + 1}/${API_KEYS.length}`);
+
+                const genAi = new GoogleGenerativeAI(apiKey);
+                const model = genAi.getGenerativeModel({
+                    model: modelName,
+                    systemInstruction: GURU_SYSTEM_PROMPT,
+                });
+
+                const history = messages.map(msg => ({
+                    role: msg.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.content }],
+                }));
+
+                const chat   = model.startChat({ history });
+                const result = await chat.sendMessage(currentMessage);
+                const text   = result.response.text();
+
+                if (text) {
+                    console.log(`[AI Service] ✅ Success — ${modelName} / key#${ki + 1}`);
+                    return text;
+                }
+                throw new Error('Empty response from AI');
+
+            } catch (error) {
+                lastError = error;
+                const snippet = (error.message || '').substring(0, 80);
+                console.error(`[AI Service] ✗ ${modelName}/key#${ki + 1}: ${snippet}`);
+
+                if (isNotFoundError(error)) {
+                    console.warn(`[AI Service] Model "${modelName}" not found. Skipping to next model.`);
+                    allKeysRateLimited = false;
+                    break; 
+                }
+
+                if (isRateLimitError(error)) {
+                    anyRateLimitHit = true;
+                    console.warn(`[AI Service] Key#${ki + 1} rate-limited. Trying next key…`);
+                    if (ki < API_KEYS.length - 1) await wait(500); 
+                    continue; 
+                }
+
+                // Any other error (safety, auth, network) — abort everything
+                console.error('[AI Service] Non-retriable error — aborting.');
+                throw error;
+            }
+        }
+
+        if (allKeysRateLimited && mi < MODELS.length - 1) {
+            console.warn(`[AI Service] All keys rate-limited for ${modelName}. Waiting 2s then trying next model…`);
+            await wait(2000);
+        }
+    }
+
+    // Every model × every key failed
+    // If any attempt was rate-limited, ensure the outer controller treats this as a 429
+    const finalError = lastError || new Error('AI service failed after all attempts.');
+    if (anyRateLimitHit || isRateLimitError(finalError)) {
+        finalError.isRateLimit = true;
+    }
+    throw finalError;
+}
+
+module.exports = { sendToGemini, isRateLimitError };
+
