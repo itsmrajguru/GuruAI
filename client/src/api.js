@@ -1,6 +1,8 @@
 import axios from 'axios'
 
+// The base URL for the backend API. In production, this should be set to your Render URL via environment variables.
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:2501";
+
 
 const api = axios.create({
   baseURL: API_URL,
