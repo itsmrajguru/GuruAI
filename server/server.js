@@ -19,7 +19,7 @@ const allowedOrigins = [
     process.env.CLIENT_URL,
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://guru-ai-official.netlify.app" // Example production URL, user can update
+    "https://guru-ai-official.netlify.app" // Update this once you have your final Netlify URL
 ].filter(Boolean);
 
 app.use(
@@ -60,11 +60,12 @@ app.get('/', (req, res) => {
     res.send(`<h1>GuruAI Server is running properly...</h1><p>Status: Healthy</p>`)
 })
 
-// Proper PORT handling for Render/Heroku/etc.
-const PORT = process.env.PORT || 2501;
-
+const PORT = process.env.PORT || 2501
 app.listen(PORT, '0.0.0.0', () => {
+    //step 1: with the help of chalk.green.bold we wrote a message
     const message = chalk.green.bold(`GuruAI Server Started at port ${PORT}`)
+
+    //step 2: then passed the message and box properties into the box
     const box = boxen(message, {
         padding: 1,
         margin: 1,
@@ -72,6 +73,8 @@ app.listen(PORT, '0.0.0.0', () => {
         borderColor: 'green',
         textAlignment: 'center'
     })
+    // step 3:now printed the box 
     console.log(box);
 })
+
 
