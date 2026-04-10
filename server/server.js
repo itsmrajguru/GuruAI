@@ -14,31 +14,32 @@ require('dnscache')({
     "cachesize":1000     // means can remember upto 1000 diffrent IP addresees
 })
 
-// CORS configuration - allowing production and local URLs
+// CORS configuration — strengthened for Production
 const allowedOrigins = [
     process.env.CLIENT_URL,
+    "https://guruaii.netlify.app",
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://guruaii.netlify.app" // Your official Netlify URL
-].filter(Boolean);
+    "http://127.0.0.1:5173"
+].map(url => url?.replace(/\/$/, "")); // Remove trailing slashes for perfect matching
 
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow local requests or requests from allowed origins
+        if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+            callback(null, true);
+        } else {
+            console.log("CORS Blocked Origin:", origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            // allow requests with no origin (like mobile apps or curl requests)
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.indexOf(origin) === -1) {
-                var msg = 'The CORS policy for this site does not ' +
-                    'allow access from the specified Origin.';
-                return callback(new Error(msg), false);
-            }
-            return callback(null, true);
-        },
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        credentials: true
-    })
-)
+// Handle preflight requests
+app.options('*', cors());
+
 
 app.use(cookieParser())
 app.use(express.json())
