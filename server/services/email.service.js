@@ -13,17 +13,21 @@ const sendEmail = async ({ to, subject, text, html }) => {
             return true
         }
 
+        // Clean the FROM_EMAIL to remove any unintended quotes or extra spaces
+        const fromEmail = process.env.FROM_EMAIL?.replace(/['"]/g, '').trim();
+
         //Step 1:[Hypothetically] Logging in the resend API with unique API key
         const resend = new Resend(process.env.RESEND_API_KEY)
 
         //step 2 : Calling Built-in Functionlality of resend service
         const { data, error } = await resend.emails.send({
-            from: process.env.FROM_EMAIL,  //sender Address
+            from: fromEmail,  //sender Address (cleaned)
             to: [to],  //resend service expects [] for to
             subject: subject,
             text: text,
             html: html
         })
+
         if (error) {
             console.error(`[Email] Resend API Error`, error)
             return false
