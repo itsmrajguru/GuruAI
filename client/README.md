@@ -1,16 +1,40 @@
-# React + Vite
+# 🎨 GuruAI Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The frontend of GuruAI is a high-performance, responsive React application built with **Vite** and **Tailwind CSS**.
 
-Currently, two official plugins are available:
+## 🚀 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Responsive Design**: Fully mobile-responsive layout using Tailwind CSS.
+- **State Management**: Clean handling of auth state and AI interactions.
+- **Fast Builds**: Powered by Vite for near-instant HMR and optimized production bundles.
+- **Secure**: Pre-configured with security headers and protected routes.
 
-## React Compiler
+## 🛠️ Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Setup
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Configure `.env`:
+   ```env
+   VITE_API_BASE_URL=http://localhost:2501
+   ```
+3. Start development server:
+   ```bash
+   npm run dev
+   ```
 
-## Expanding the ESLint configuration
+### Building for Production
+```bash
+npm run build
+```
+The output will be in the `dist/` directory, ready to be deployed.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📦 Deployment
+
+This frontend is configured for:
+- **Netlify**: Using `netlify.toml` for redirects/headers.
+- **Vercel**: Using `vercel.json` for SPA routing.
+
+For more details, see the root [DEPLOYMENT.md](../DEPLOYMENT.md).
