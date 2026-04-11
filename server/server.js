@@ -59,21 +59,25 @@ app.get('/', (req, res) => {
     res.send(`<h1>GuruAI Server is running properly...</h1><p>Status: Healthy</p>`)
 })
 
-const PORT = process.env.PORT || 2501
-app.listen(PORT, '0.0.0.0', () => {
-    //step 1: with the help of chalk.green.bold we wrote a message
-    const message = chalk.green.bold(`GuruAI Server Started at port ${PORT}`)
+if (require.main === module) {
+    const PORT = process.env.PORT || 2501
+    app.listen(PORT, '0.0.0.0', () => {
+        //step 1: with the help of chalk.green.bold we wrote a message
+        const message = chalk.green.bold(`GuruAI Server Started at port ${PORT}`)
 
-    //step 2: then passed the message and box properties into the box
-    const box = boxen(message, {
-        padding: 1,
-        margin: 1,
-        borderStyle: 'double',
-        borderColor: 'green',
-        textAlignment: 'center'
+        //step 2: then passed the message and box properties into the box
+        const box = boxen(message, {
+            padding: 1,
+            margin: 1,
+            borderStyle: 'double',
+            borderColor: 'green',
+            textAlignment: 'center'
+        })
+        // step 3:now printed the box 
+        console.log(box);
     })
-    // step 3:now printed the box 
-    console.log(box);
-})
+}
+
+module.exports = app;
 
 
