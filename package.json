@@ -1,0 +1,11 @@
+{
+  "name": "guru-ai-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "client-install": "cd client && npm install",
+    "client-build": "cd client && npm run build",
+    "server-install": "cd server && npm install",
+    "build": "cd client && npm run build"
+  }
+}
