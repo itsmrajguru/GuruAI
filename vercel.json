@@ -14,9 +14,9 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/server/server.js" },
-    { "source": "/auth/(.*)", "destination": "/server/server.js" },
-    { "source": "/ai/(.*)", "destination": "/server/server.js" },
+    { "source": "/api/(.*)", "destination": "https://guruai-backend.onrender.com/api/$1" },
+    { "source": "/auth/(.*)", "destination": "https://guruai-backend.onrender.com/auth/$1" },
+    { "source": "/ai/(.*)", "destination": "https://guruai-backend.onrender.com/ai/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
