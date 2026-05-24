@@ -1,4 +1,4 @@
-# 🔱 GuruAI - Your Spiritual & Intelligent AI Companion
+# GuruAI - Your Spiritual & Intelligent AI Companion
 
 [![Vercel Deployment](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://vercel.com)
 [![Render Deployment](https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render)](https://render.com)
@@ -79,14 +79,6 @@ npm run dev
 
 ---
 
-## 🌐 Deployment
-
-GuruAI is designed to be deployment-agnostic. For detailed environment variable setup and step-by-step instructions, please refer to the **[Deployment Guide](DEPLOYMENT.md)**.
-
-- **Frontend**: Recommended on **Netlify** or **Vercel**.
-- **Backend**: Recommended on **Render** (using Blueprint) or **Vercel Functions**.
-
----
 
 ## 🛡️ License
 
