@@ -8,7 +8,7 @@ export default function AuthLeftPanel() {
       <div className="absolute rounded-full pointer-events-none z-0 w-[500px] h-[500px] -bottom-[150px] -right-[120px] bg-[radial-gradient(circle,rgba(240,125,7,0.15)_0%,transparent_70%)] animate-pulse-slow delay-700" />
       
       {/* Content Container */}
-      <div className="flex flex-col items-start flex-none w-[320px] relative z-10 animate-fade-up">
+      <div className="flex flex-col items-center md:items-start flex-none w-full md:w-[320px] relative z-10 animate-fade-up text-center md:text-left">
         
         {/* Brand Logo for the GuruAI Project */}
         <div className="mb-6 w-full flex justify-center">

@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-surface-50 flex items-center justify-center px-4 py-8 relative overflow-hidden font-sans">
-      <div className="relative z-10 flex items-center gap-8 w-full max-w-[860px]">
+      <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 w-full max-w-[860px]">
 
         {/* left side authComponent */}
         <AuthLeftPanel />

@@ -87,7 +87,7 @@ const S = {
   emptyLogoWrap: { width:'44px', height:'44px', borderRadius:'12px', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'24px', overflow:'hidden' },
   emptyTitle: { fontSize:'28px', fontWeight:600, color:'#e8e8e8', marginBottom:'10px', textAlign:'center', letterSpacing:'-0.6px', lineHeight:1.2 },
   emptySub: { fontSize:'15px', color:'#52525a', textAlign:'center', lineHeight:1.75, maxWidth:'420px', marginBottom:'36px' },
-  suggestGrid: { display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', width:'100%', maxWidth:'520px' },
+  suggestGrid: { display:'grid', gap:'8px', width:'100%', maxWidth:'520px' },
   chip: { display:'flex', alignItems:'center', gap:'12px', padding:'13px 16px', borderRadius:'10px', background:'#191919', border:'1px solid #272729', cursor:'pointer', textAlign:'left', transition:'background .15s,border-color .15s' },
   chipIcon: { fontSize:'17px', flexShrink:0 },
   chipText: { fontSize:'13.5px', color:'#a8a8b4', lineHeight:1.35, fontWeight:450 },
@@ -119,7 +119,7 @@ export default function DashboardPage() {
 
   // sidebar state
   const [conversations, setConversations] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [deletingId, setDeletingId] = useState(null);
 
   // chat state
@@ -177,6 +177,8 @@ export default function DashboardPage() {
       const data = await getConversation(id);
       if (data.success) { setActiveConversationId(id); setMessages(data.conversation.messages); }
     } catch (e) { console.error('Failed to load conversation:', e); }
+    /* on mobile, close the sidebar after selecting a chat */
+    if (window.innerWidth < 768) setSidebarOpen(false);
   }
 
   /* this will clear the current chat window and let the user
@@ -186,6 +188,8 @@ export default function DashboardPage() {
     setMessages([]);
     setInput('');
     textareaRef.current?.focus();
+    /* on mobile, close the sidebar after starting a new chat */
+    if (window.innerWidth < 768) setSidebarOpen(false);
   }
 
   /* this function will completely remove a specific chat
@@ -308,20 +312,82 @@ export default function DashboardPage() {
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #2e2e32; border-radius: 4px; }
+
+        /* Mobile sidebar — full screen drawer like ChatGPT/Claude mobile */
+        @media (max-width: 767px) {
+          .guru-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100vh !important;
+            width: 100vw !important;
+            min-width: 100vw !important;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          }
+          .guru-sidebar.open {
+            transform: translateX(0);
+          }
+          .guru-main {
+            width: 100% !important;
+            min-width: 0 !important;
+            flex: 1 !important;
+          }
+          .guru-mobile-close {
+            display: flex !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .guru-sidebar {
+            position: relative !important;
+            transform: none !important;
+          }
+          .guru-mobile-close {
+            display: none !important;
+          }
+        }
+        .guru-mobile-close {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          margin-left: auto;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #88889a;
+          padding: 6px;
+          border-radius: 7px;
+          transition: background .15s, color .15s;
+        }
+        .guru-mobile-close:hover {
+          background: #232326;
+          color: #ececec;
+        }
       `}</style>
 
       {/* ══════════════════════════════════════
           SIDEBAR
           ══════════════════════════════════════ */}
-      <aside style={S.sidebar(sidebarOpen)}>
+      <aside style={S.sidebar(sidebarOpen)} className={`guru-sidebar${sidebarOpen ? ' open' : ''}`}>
         <div style={S.sidebarTop}>
 
-          {/* Logo row */}
+          {/* Logo row — the X button only shows on mobile to close the full-screen sidebar */}
           <div style={S.logo}>
             <div style={S.logoIcon}>
               <img src="/logo.svg" alt="GuruAI Logo" style={{ width:'100%', height:'100%', objectFit:'contain' }} />
             </div>
             <span style={S.logoText}>Guru<span style={{color:'#f59e0b'}}>AI</span></span>
+            <button
+              className="guru-mobile-close"
+              onClick={() => setSidebarOpen(false)}
+              title="Close sidebar"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
 
           {/* New Conversation button */}
@@ -378,7 +444,7 @@ export default function DashboardPage() {
       {/* ══════════════════════════════════════
           MAIN CHAT AREA
           ══════════════════════════════════════ */}
-      <main style={S.main}>
+      <main style={S.main} className="guru-main">
 
         {/* Top bar */}
         <header style={S.topbar}>
@@ -415,7 +481,7 @@ export default function DashboardPage() {
                 <p style={S.emptySub}>
                   Your personal career guidance companion. Ask me anything about your career — resume tips, interview prep, salary negotiation, and beyond.
                 </p>
-                <div style={S.suggestGrid}>
+                <div style={S.suggestGrid} className="grid-cols-1 md:grid-cols-2">
                   {SUGGESTIONS.map((s, i) => (
                     <button
                       key={i}
