@@ -1,30 +1,24 @@
-/* TypingIndicator — three bouncing dots shown while Gemini is generating a response.
-   Uses the typingBounce @keyframes already defined in index.css.
-   Each dot is delayed so they bounce in sequence (wave effect). */
+/* this animated component shows three bouncing dots
+  to tell the user that the GuruAI is currently thinking and generating a reply */
 
 export default function TypingIndicator() {
-    return (
-        <div className="flex items-start gap-3 mb-4">
-            {/* GuruAI avatar dot */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span className="text-white text-xs font-bold font-display">G</span>
-            </div>
+  return (
+    <div style={{ display:'flex', gap:'16px', alignItems:'flex-start', padding:'18px 0' }}>
+      /* here we show the GuruAI logo right next to the typing dots */
+      <div style={{ width:'26px', height:'26px', borderRadius:'6px', background:'#fff', flexShrink:0, marginTop:'1px', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <img src="/logo.svg" alt="GuruAI" style={{ width:'100%', height:'100%', objectFit:'contain' }} />
+      </div>
 
-            {/* Bouncing dots bubble */}
-            <div className="bg-white border border-surface-300 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
-                <span
-                    className="w-2 h-2 rounded-full bg-primary-400 inline-block"
-                    style={{ animation: 'typingBounce 1.2s ease-in-out infinite', animationDelay: '0ms' }}
-                />
-                <span
-                    className="w-2 h-2 rounded-full bg-primary-400 inline-block"
-                    style={{ animation: 'typingBounce 1.2s ease-in-out infinite', animationDelay: '200ms' }}
-                />
-                <span
-                    className="w-2 h-2 rounded-full bg-primary-400 inline-block"
-                    style={{ animation: 'typingBounce 1.2s ease-in-out infinite', animationDelay: '400ms' }}
-                />
-            </div>
-        </div>
-    );
+      /* this container holds the three dots which will animate
+        one by one to create a nice bouncing effect */
+      <div style={{ flex:1, display:'flex', gap:'5px', alignItems:'center', height:'24px' }}>
+        {[0, 200, 400].map(delay => (
+          <span
+            key={delay}
+            style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#666', display:'inline-block', animation:'typingBounce 1.2s ease-in-out infinite', animationDelay:`${delay}ms` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
