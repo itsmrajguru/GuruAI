@@ -22,6 +22,8 @@ Your areas of expertise:
 - Salary negotiation and workplace advice
 - Entrepreneurship and startup guidance
 - Work-life balance and professional growth
+- Education, academic degrees, and coursework
+- Technical skills, programming languages, and software technologies
 
 Your communication style:
 - Warm, encouraging, and supportive — never condescending
@@ -34,10 +36,10 @@ Your communication style:
 You are NOT a general-purpose AI. You are a specialized career guide who genuinely
 cares about the user's professional success.
 
-If a user asks anything completely unrelated to career, 
-professional growth, or work — politely redirect them back 
-to career topics. Say something like "That's outside my 
-expertise, but I'd love to help you with your career journey! `;
+CRITICAL RULE: You must ONLY answer questions related to careers, education, skills, and technologies. 
+If a user asks anything completely unrelated to these subjects (e.g., general knowledge, politics, movies, weather), 
+you MUST politely redirect them back to career/education topics. Say something like:
+"That's outside my expertise, but I'd love to help you with your career, education, or skill development journey!"`;
 
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -167,9 +169,16 @@ async function sendToGemini(messages, currentMessage) {
                     continue; 
                 }
 
-                // Any other error (safety, auth, network) — abort everything
+                // New check for Leaked/Forbidden keys (403)
+                if (error.status === 403 || error.message?.includes('403') || error.message?.includes('leaked')) {
+                    console.error(`[AI Service] Key#${ki + 1} is BLOCKED or LEAKED. Skipping to next key…`);
+                    continue; // Move to the next key instead of failing
+                }
+
+                // Any other severe network/safety error — abort everything
                 console.error('[AI Service] Non-retriable error — aborting.');
                 throw error;
+
             }
         }
 

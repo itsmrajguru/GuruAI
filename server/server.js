@@ -21,7 +21,10 @@ const allowedOrigins = [
     "https://guruaivercel.vercel.app",
     "https://guruaii.netlify.app",
     "http://localhost:5173",
-    "http://127.0.0.1:5173"
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176"
 ].map(url => url?.replace(/\/$/, "")); // Remove trailing slashes for perfect matching
 
 app.use(cors({
@@ -55,6 +58,10 @@ app.use('/auth', authRouter)
 //ai integration routes connection
 const { aiRouter } = require('./routes/ai.routes')
 app.use('/ai', aiRouter)
+
+//widget integration route connection
+const { widgetRouter } = require('./routes/widget.routes')
+app.use('/widget', widgetRouter)
 
 //welcome Route
 app.get('/', (req, res) => {
