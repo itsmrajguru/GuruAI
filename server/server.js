@@ -18,6 +18,7 @@ require('dnscache')({
 const allowedOrigins = [
     process.env.CLIENT_URL,
     "https://guruaimsr.vercel.app",
+    "https://careersyncplatformmsr.vercel.app",   // CareerSync Production
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:5174",
